@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LGU e-ID Municipal Pocketbook & Field Verifier Terminal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card: #111827;
+      --border: #1f2937;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --primary: #2563eb;
+      --accent: #10b981;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+    body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
+    header { text-align: center; margin-bottom: 24px; }
+    header h1 { font-size: 1.5rem; letter-spacing: -0.5px; }
+    header p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1100px; margin: 0 auto; }
+    @media(max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+
+    .device { background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; position: relative; }
+    .device-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; color: var(--muted); }
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+    .badge-offline { background: #451a03; color: #fbbf24; }
+
+    /* Pocketbook Card */
+    .qr-container { background: #fff; padding: 12px; border-radius: 12px; display: flex; justify-content: center; align-items: center; margin: 12px 0; border: 6px solid #2563eb; transition: border-color 0.4s ease; min-height: 220px; }
+    .citizen-info { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.85rem; }
+    .claims-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .claim-pill { background: #334155; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+    .timer-bar { height: 6px; background: #374151; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+    .timer-fill { height: 100%; background: var(--accent); width: 100%; transition: width 1s linear; }
+
+    /* Field Verifier */
+    .action-btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-bottom: 16px; transition: background 0.2s; }
+    .action-btn:hover { background: #1d4ed8; }
+    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .danger-btn { background: var(--danger); }
+    .danger-btn:hover { background: #dc2626; }
+
+    .checklist { display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; margin-bottom: 16px; }
+    .check-item { display: flex; align-items: center; gap: 8px; background: #1e293b; padding: 8px 12px; border-radius: 6px; }
+    .check-icon { width: 16px; height: 16px; border-radius: 50%; display: inline-block; background: #475569; }
+    .check-pass { background: #10b981; }
+    .check-fail { background: #ef4444; }
+
+    /* Controls */
+    .controls { max-width: 1100px; margin: 24px auto 0; background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 20px; }
+    .control-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .audit-box { margin-top: 16px; max-height: 160px; overflow-y: auto; background: #020617; padding: 10px; border-radius: 8px; font-size: 0.75rem; font-family: monospace; border: 1px solid #1e293b; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>MUNICIPAL e-ID TRUST PLATFORM</h1>
+    <p>Zero-Knowledge Offline Presentation & Handheld Terminal Simulation</p>
+  </header>
+
+  <div class="grid">
+    <!-- CITIZEN MOBILE POCKETBOOK -->
+    <div class="device" id="pocketbook-card">
+      <div class="device-header">
+        <span>Citizen Pocketbook</span>
+        <span class="badge badge-offline">Offline Storage (AES-GCM)</span>
+      </div>
+      <div class="citizen-info">
+        <strong id="cit-name">Juan Dela Cruz</strong>
+        <p style="color:var(--muted); font-size:0.75rem;">DOB: 1958-06-12 | LGU: City of Pasig</p>
+        <div class="claims-grid" id="claims-box">
+          <span class="claim-pill">Resident</span>
+          <span class="claim-pill">Senior Citizen</span>
+          <span class="claim-pill">4Ps Beneficiary</span>
+          <span class="claim-pill">Active Voter</span>
+        </div>
+      </div>
+
+      <div class="qr-container" id="qr-frame">
+        <canvas id="qr-canvas"></canvas>
+      </div>
+
+      <div style="font-size:0.8rem; display:flex; justify-content:space-between; color:var(--muted);">
+        <span>Anti-Replay Refresh: <strong id="timer-txt">60s</strong></span>
+        <span id="chrono-txt" style="font-weight:600;">CHRONO: #2563EB</span>
+      </div>
+      <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+    </div>
+
+    <!-- FIELD VERIFIER TERMINAL -->
+    <div class="device" id="verifier-card">
+      <div class="device-header">
+        <span>Field Terminal</span>
+        <span class="badge badge-offline">100% Offline (PureEd25519)</span>
+      </div>
+
+      <button class="action-btn" id="btn-scan" onclick="scanCurrentQr()">Scan Active Dynamic QR</button>
+
+      <div class="checklist">
+        <div class="check-item"><span class="check-icon" id="c1"></span> 1. Temporal Window Freshness (&le; 60s)</div>
+        <div class="check-item"><span class="check-icon" id="c2"></span> 2. Binary Layout & Magic Header (0x4C47)</div>
+        <div class="check-item"><span class="check-icon" id="c3"></span> 3. Municipal Keystore Anchor Resolution</div>
+        <div class="check-item"><span class="check-icon" id="c4"></span> 4. Asymmetric PureEd25519 Math Signature Check</div>
+        <div class="check-item"><span class="check-icon" id="c5"></span> 5. Bitmask Revocation Cache Lookup</div>
+        <div class="check-item"><span class="check-icon" id="c6"></span> 6. SHA-256 Tamper-Evident Audit Ledger Record</div>
+      </div>
+
+      <div class="citizen-info" id="verify-output" style="display:none;">
+        <strong id="v-status" style="color:var(--accent);">VERIFIED (AUTHENTIC)</strong>
+        <p id="v-details" style="font-size:0.75rem; color:var(--muted); margin-top:4px;"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADVERSARIAL ATTACK & MUNICIPAL CONTROL SUITE -->
+  <div class="controls">
+    <div class="device-header">
+      <span>Municipal Control Plane & Adversarial Security Vectors</span>
+    </div>
+    <div class="control-row">
+      <button class="action-btn danger-btn" id="btn-revoke" onclick="toggleRevocation()">Toggle Revocation Status</button>
+      <button class="action-btn" style="background:#475569;" id="btn-tamper" onclick="testTamperAttack()">Inject Claim Bit-Flip (Tamper)</button>
+      <button class="action-btn" style="background:#475569;" id="btn-freeze" onclick="testReplayAttack()">Freeze Stale Screenshot (Replay Attack)</button>
+    </div>
+    <div class="audit-box" id="audit-log">Audit ledger loading...</div>
+  </div>
+
+  <script>
+    let currentPayload = "";
+    let isStaleReplay = false;
+    let isTampered = false;
+
+    async function fetchPocketbook() {
+      if (isStaleReplay) return;
+      try {
+        const res = await fetch("/api/pocketbook/qr");
+        const data = await res.json();
+        currentPayload = data.qrString;
+
+        // Update QR Frame & Chrono Border
+        document.getElementById("qr-frame").style.borderColor = data.chronoColor;
+        document.getElementById("chrono-txt").textContent = "CHRONO: " + data.chronoColor;
+        document.getElementById("chrono-txt").style.color = data.chronoColor;
+        document.getElementById("timer-txt").textContent = data.secondsRemainingInWindow + "s";
+        document.getElementById("timer-fill").style.width = (data.secondsRemainingInWindow / 60 * 100) + "%";
+
+        QRCode.toCanvas(document.getElementById("qr-canvas"), data.qrString, { width: 200, margin: 1 });
+        document.getElementById("btn-revoke").textContent = data.isRevoked ? "Restore Active Status" : "Revoke Citizen Credential";
+      } catch (e) {
+        console.error("Fetch error", e);
+      }
+    }
+
+    async function scanCurrentQr() {
+      let payloadToScan = currentPayload;
+      if (isTampered) {
+        // Corrupt characters in the Base64URL string to flip bit
+        payloadToScan = payloadToScan.substring(0, 15) + "X" + payloadToScan.substring(16);
+      }
+
+      try {
+        const res = await fetch("/api/verifier/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ qrPayload: payloadToScan })
+        });
+        const data = await res.json();
+
+        const out = document.getElementById("verify-output");
+        out.style.display = "block";
+
+        if (data.success) {
+          document.getElementById("v-status").textContent = "VERIFIED (AUTHENTIC) [" + data.latencyMs.toFixed(2) + " ms]";
+          document.getElementById("v-status").style.color = "var(--accent)";
+          document.getElementById("v-details").textContent = "ID: " + data.result.citizenPseudonym + " | Claims: Resident, Senior, 4Ps, Voter";
+          for (let i = 1; i <= 6; i++) document.getElementById("c" + i).className = "check-icon check-pass";
+        } else {
+          document.getElementById("v-status").textContent = "REJECTED: " + data.error;
+          document.getElementById("v-status").style.color = "var(--danger)";
+          document.getElementById("v-details").textContent = "Violation Code: " + data.code;
+          for (let i = 1; i <= 6; i++) document.getElementById("c" + i).className = "check-icon check-fail";
+        }
+        refreshAuditLog();
+      } catch (e) {
+        console.error("Scan error", e);
+      }
+    }
+
+    async function toggleRevocation() {
+      await fetch("/api/authority/toggle-revocation", { method: "POST" });
+      fetchPocketbook();
+      refreshAuditLog();
+    }
+
+    function testTamperAttack() {
+      isTampered = !isTampered;
+      document.getElementById("btn-tamper").style.background = isTampered ? "#dc2626" : "#475569";
+      alert("Tamper Mode: " + (isTampered ? "ACTIVE (Next scan will flip bits)" : "INACTIVE"));
+    }
+
+    function testReplayAttack() {
+      isStaleReplay = !isStaleReplay;
+      document.getElementById("btn-freeze").style.background = isStaleReplay ? "#d97706" : "#475569";
+      alert("Screenshot Freeze: " + (isStaleReplay ? "FROZEN (Wait 60s to trigger replay expiration)" : "RESUMED"));
+    }
+
+    async function refreshAuditLog() {
+      try {
+        const res = await fetch("/api/verifier/audit-log");
+        const logs = await res.json();
+        const box = document.getElementById("audit-log");
+        box.innerHTML = logs.map(l => `[${new Date(l.timestamp*1000).toLocaleTimeString()}] ${l.status} - ID: ${l.citizenPseudonym.substring(0,8)}... | Status: ${l.status} ${l.rejectionReason ? '(' + l.rejectionReason + ')' : ''} | Hash: ${l.recordHash.substring(0,16)}...`).join("<br>");
+      } catch (e) {
+        console.error("Audit log error", e);
+      }
+    }
+
+    setInterval(fetchPocketbook, 1000);
+    fetchPocketbook();
+    refreshAuditLog();
+  </script>
+</body>
+</html>

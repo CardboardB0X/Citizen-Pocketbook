@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Air-Gapped Sync Station • Municipality of Tanza, Cavite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #006C4C;
+      --primary-container: #89F8C7;
+      --bg: #F4F8F5;
+      --surface: #FFFFFF;
+      --border: #D1DDD5;
+      --text: #181D1A;
+      --muted: #4B5563;
+      --font-main: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-main); }
+    body { background: #E5EBE6; color: var(--text); padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+
+    .sync-card {
+      width: 100%; max-width: 540px; background: var(--surface);
+      border: 3px solid var(--border); border-radius: 28px; padding: 28px;
+      display: flex; flex-direction: column; gap: 18px; box-shadow: 0 16px 36px rgba(0, 48, 28, 0.12);
+    }
+    .header { border-bottom: 1px solid var(--border); padding-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .header h2 { font-size: 1.15rem; font-weight: 800; color: var(--primary); }
+    .header p { font-size: 0.75rem; color: var(--muted); font-weight: 600; }
+    .badge { background: #D5F7E8; color: #005236; padding: 4px 10px; border-radius: 99px; font-size: 0.72rem; font-weight: 800; }
+
+    .action-section {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .action-section h3 { font-size: 0.92rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .action-section p { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+
+    .btn {
+      background: var(--primary); color: white; border: none; padding: 11px 18px; border-radius: 12px;
+      font-weight: 800; font-size: 0.82rem; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 6px; transition: background 0.15s, transform 0.1s;
+    }
+    .btn:hover { background: #005236; }
+    .btn:active { transform: scale(0.97); }
+
+    .status-alert { padding: 12px 16px; border-radius: 12px; font-size: 0.8rem; font-weight: 700; display: none; }
+    .status-alert.success { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+
+    /* Optical Beam Box */
+    .optical-beam-box {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 16px; background: #FFFFFF; border: 2px solid var(--primary); border-radius: 16px; text-align: center; gap: 10px;
+    }
+    .optical-beam-box img { width: 220px; height: 220px; border-radius: 8px; display: block; }
+    .beam-progress-text { font-size: 0.8rem; font-weight: 800; color: var(--primary); font-family: var(--font-mono); }
+  </style>
+</head>
+<body>
+  <div class="sync-card">
+    <div class="header">
+      <div>
+        <h2>Air-Gapped Sync Station</h2>
+        <p>Bayan ng Tanza, Cavite • Field Terminal Hub</p>
+      </div>
+      <span class="badge">Air-Gapped & Optical Mesh</span>
+    </div>
+
+    <!-- Export Section -->
+    <div class="action-section">
+      <h3>📁 1. Offload Encrypted Audit Logs</h3>
+      <p>Export all local checkpoint verification records encrypted with AES-256-GCM onto a USB thumbdrive for delivery to Tanza Municipal Hall.</p>
+      <button class="btn" onclick="exportAudit()">Download tanza_audit_2026.enc</button>
+    </div>
+
+    <!-- Ingest Section -->
+    <div class="action-section">
+      <h3>📥 2. Ingest Signed Revocation Delta (USB)</h3>
+      <p>Load the latest municipal revocation blacklist manifest signed by the Mayor's root authority key via USB stick.</p>
+      <button class="btn" style="background:#364B3F;" onclick="simulateRevocationIngest()">Apply Signed Delta Manifest</button>
+    </div>
+
+    <!-- Optical Mesh Relay Beam Section -->
+    <div class="action-section">
+      <h3>📡 3. Optical QR-to-QR Mesh Relay (Zero Cables)</h3>
+      <p>Broadcast the latest signed revocation delta manifest as a high-speed animated QR optical stream. Field cameras can ingest without cables or flash drives!</p>
+      
+      <div style="display:flex; gap:8px;">
+        <button class="btn" id="btn-beam" onclick="startOpticalBeam()">Start Optical QR Beam</button>
+        <button class="btn" id="btn-stop-beam" style="display:none; background:#BA1A1A;" onclick="stopOpticalBeam()">Stop Beam</button>
+      </div>
+
+      <div class="optical-beam-box" id="beam-container">
+        <div class="beam-progress-text" id="beam-counter">Frame 1 / 4 (25%)</div>
+        <img id="beam-qr-img" src="" alt="Optical Mesh Frame">
+        <p style="font-size:0.7rem; color:var(--muted);">Hold terminal camera steady toward this stream</p>
+      </div>
+    </div>
+
+    <div class="status-alert" id="status-box"></div>
+  </div>
+
+  <script>
+    let beamInterval = null;
+    let beamFrames = [];
+    let currentFrameIdx = 0;
+
+    async function exportAudit() {
+      const res = await fetch("/api/sync/export-audit");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "tanza_audit_2026.enc";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      showStatus("✓ Encrypted audit package generated & downloaded to USB successfully!");
+    }
+
+    async function simulateRevocationIngest() {
+      const res = await fetch("/api/authority/toggle-revocation", { method: "POST" });
+      const data = await res.json();
+      showStatus("✓ Ingested latest Ed25519-signed revocation delta. Revocation status updated offline!");
+    }
+
+    async function startOpticalBeam() {
+      try {
+        const res = await fetch("/api/mesh/beam-manifest");
+        const data = await res.json();
+        beamFrames = data.frames;
+        currentFrameIdx = 0;
+
+        document.getElementById("btn-beam").style.display = "none";
+        document.getElementById("btn-stop-beam").style.display = "inline-flex";
+        document.getElementById("beam-container").style.display = "flex";
+
+        renderNextBeamFrame();
+        beamInterval = setInterval(renderNextBeamFrame, 350); // ~3 FPS optical loop
+      } catch (err) {
+        alert("Optical beam error: " + err.message);
+      }
+    }
+
+    function renderNextBeamFrame() {
+      if (beamFrames.length === 0) return;
+      const frame = beamFrames[currentFrameIdx];
+      document.getElementById("beam-qr-img").src = frame.qrDataUrl;
+      document.getElementById("beam-counter").textContent = `FRAME ${frame.sequenceIndex + 1} / ${frame.totalChunks} (CRC: 0x${frame.crc32.toString(16)})`;
+      currentFrameIdx = (currentFrameIdx + 1) % beamFrames.length;
+    }
+
+    function stopOpticalBeam() {
+      clearInterval(beamInterval);
+      document.getElementById("btn-beam").style.display = "inline-flex";
+      document.getElementById("btn-stop-beam").style.display = "none";
+      document.getElementById("beam-container").style.display = "none";
+    }
+
+    function showStatus(msg) {
+      const box = document.getElementById("status-box");
+      box.style.display = "block";
+      box.className = "status-alert success";
+      box.textContent = msg;
+    }
+  </script>
+</body>
+</html>

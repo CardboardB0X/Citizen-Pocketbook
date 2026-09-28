@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Municipal Civil Registrar & Admin Portal • Bayan ng Tanza, Cavite</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --md-primary: #006C4C;
+      --md-on-primary: #FFFFFF;
+      --md-primary-container: #89F8C7;
+      --md-on-primary-container: #002114;
+      --md-secondary: #4C6357;
+      --md-secondary-container: #CEE9D9;
+      --md-tertiary: #7D5700;
+      --md-tertiary-container: #FFE088;
+      --md-surface: #F8FBF8;
+      --md-surface-container: #EAF1EB;
+      --md-surface-container-high: #E3EBE5;
+      --md-surface-container-lowest: #FFFFFF;
+      --md-on-surface: #171D1A;
+      --md-on-surface-variant: #3F4943;
+      --md-outline: #6F7972;
+      --md-outline-variant: #BCC7BF;
+      --md-error: #BA1A1A;
+      --md-error-container: #FFDAD6;
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-full: 9999px;
+      --font-brand: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-brand); }
+    body { background: #EEF3EF; color: var(--md-on-surface); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* Material Symbols SVG Icon Utility */
+    .icon { width: 20px; height: 20px; fill: currentColor; display: inline-block; vertical-align: middle; flex-shrink: 0; }
+    .icon-lg { width: 28px; height: 28px; }
+
+    /* App Header */
+    header {
+      background: var(--md-surface-container-lowest);
+      border-bottom: 1px solid var(--md-outline-variant);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-brand { display: flex; align-items: center; gap: 14px; }
+    .header-logo {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--md-primary-container);
+      display: grid; place-items: center; color: var(--md-on-primary-container); font-weight: 800; font-size: 1.1rem;
+    }
+    .header-title h1 { font-size: 1.15rem; font-weight: 800; color: var(--md-primary); letter-spacing: -0.3px; }
+    .header-title p { font-size: 0.8rem; color: var(--md-on-surface-variant); font-weight: 500; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+
+    .btn {
+      padding: 9px 18px; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 8px; border: none; transition: 0.2s;
+    }
+    .btn-primary { background: var(--md-primary); color: var(--md-on-primary); }
+    .btn-primary:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn-tonal { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
+    .btn-tonal:hover { background: #bedcc9; }
+    .btn-outline { background: transparent; border: 1px solid var(--md-outline); color: var(--md-on-surface); }
+    .btn-danger { background: var(--md-error); color: white; }
+
+    /* Layout */
+    .admin-container {
+      max-width: 1300px; width: 100%; margin: 24px auto; padding: 0 20px;
+      display: grid; grid-template-columns: 240px 1fr; gap: 24px; flex: 1;
+    }
+
+    /* Sidebar Navigation */
+    .nav-rail {
+      background: var(--md-surface-container-lowest); border-radius: var(--radius-lg);
+      padding: 16px 12px; height: fit-content; border: 1px solid var(--md-outline-variant);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-full);
+      font-size: 0.85rem; font-weight: 600; color: var(--md-on-surface-variant); cursor: pointer;
+      transition: 0.15s; border: none; background: transparent; width: 100%; text-align: left;
+    }
+    .nav-item:hover { background: var(--md-surface-container); color: var(--md-on-surface); }
+    .nav-item.active { background: var(--md-primary-container); color: var(--md-on-primary-container); font-weight: 800; }
+
+    /* Content Area */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--md-surface-container-lowest); border-radius: var(--radius-lg);
+      padding: 24px; border: 1px solid var(--md-outline-variant); margin-bottom: 24px;
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .card-title { font-size: 1.1rem; font-weight: 800; color: var(--md-on-surface); display: flex; align-items: center; gap: 10px; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-box {
+      background: var(--md-surface-container-lowest); border: 1px solid var(--md-outline-variant);
+      border-radius: var(--radius-md); padding: 18px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .stat-label { font-size: 0.75rem; font-weight: 700; color: var(--md-on-surface-variant); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-val { font-size: 2rem; font-weight: 800; color: var(--md-primary); }
+
+    /* Forms */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--md-on-surface); }
+    .form-input, .form-select {
+      padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--md-outline);
+      background: var(--md-surface); font-size: 0.9rem; color: var(--md-on-surface); outline: none;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--md-primary); box-shadow: 0 0 0 3px rgba(0, 108, 76, 0.15); }
+
+    .chip-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+    .filter-chip {
+      padding: 8px 14px; border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600;
+      border: 1px solid var(--md-outline-variant); background: var(--md-surface); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; user-select: none;
+    }
+    .filter-chip.selected { background: var(--md-primary-container); color: var(--md-on-primary-container); border-color: var(--md-primary); font-weight: 700; }
+
+    /* Table */
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    th { padding: 12px 14px; background: var(--md-surface-container); color: var(--md-on-surface-variant); font-weight: 700; border-bottom: 1px solid var(--md-outline-variant); }
+    td { padding: 14px; border-bottom: 1px solid var(--md-outline-variant); }
+    tr:hover { background: var(--md-surface); }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: var(--radius-full);
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .status-active { background: #D1E7DD; color: #0F5132; }
+    .status-revoked { background: #F8D7DA; color: #842029; }
+
+    /* Printable Card Section */
+    .printable-card-preview {
+      width: 480px; height: 300px; border-radius: 18px; background: linear-gradient(135deg, #00563B 0%, #006C4C 50%, #0A7A57 100%);
+      color: white; padding: 22px; position: relative; overflow: hidden; box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+      border: 2px solid #FFE088; display: flex; flex-direction: column; justify-content: space-between; margin: 0 auto;
+    }
+    .print-guilloche {
+      position: absolute; inset: 0; opacity: 0.12;
+      background-image: repeating-radial-gradient(circle at 50% 50%, transparent 0, #ffffff 2px, transparent 4px, transparent 8px);
+      pointer-events: none;
+    }
+    .card-front-top { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2; }
+    .card-front-body { display: flex; gap: 16px; align-items: center; position: relative; z-index: 2; }
+    .card-qr-box { background: white; padding: 6px; border-radius: 10px; width: 96px; height: 96px; display: grid; place-items: center; }
+    .card-qr-box img { width: 100%; height: 100%; }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printable-id-card-view, #printable-id-card-view * { visibility: visible; }
+      #printable-id-card-view { position: fixed; left: 0; top: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Material Symbols SVG Sprite -->
+  <svg style="display: none;">
+    <symbol id="icon-badge" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></symbol>
+    <symbol id="icon-person" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    <symbol id="icon-add-user" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></symbol>
+    <symbol id="icon-print" viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></symbol>
+    <symbol id="icon-block" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1c1.06 1.35 1.69 3.05 1.69 4.9 0 4.42-3.58 8-8 8z"/></symbol>
+    <symbol id="icon-ayuda" viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/></symbol>
+    <symbol id="icon-sync" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></symbol>
+    <symbol id="icon-stats" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></symbol>
+  </svg>
+
+  <!-- Header -->
+  <header>
+    <div class="header-brand">
+      <div class="header-logo">
+        <svg class="icon"><use href="#icon-badge"/></svg>
+      </div>
+      <div class="header-title">
+        <h1 id="lbl-portal-title">Municipal Civil Registrar & Admin Portal</h1>
+        <p id="lbl-lgu-subtitle">Pamahalaang Bayan ng Tanza, Lalawigan ng Cavite • PSGC: 042120000</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" id="btn-lang-toggle" onclick="toggleLanguage()">
+        <span id="lang-flag">🇵🇭</span> <span id="lang-text">Tagalog</span>
+      </button>
+      <a href="/client" target="_blank" class="btn btn-tonal">
+        <svg class="icon"><use href="#icon-person"/></svg> Citizen App
+      </a>
+      <a href="/terminal" target="_blank" class="btn btn-tonal">
+        <svg class="icon"><use href="#icon-badge"/></svg> Verifier
+      </a>
+      <a href="/sync" target="_blank" class="btn btn-tonal">
+        <svg class="icon"><use href="#icon-sync"/></svg> Air-Gap Sync
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <aside class="nav-rail">
+      <button class="nav-item active" onclick="switchTab('tab-overview', this)">
+        <svg class="icon"><use href="#icon-stats"/></svg> <span class="nav-text">Overview & Stats</span>
+      </button>
+      <button class="nav-item" onclick="switchTab('tab-enroll', this)">
+        <svg class="icon"><use href="#icon-add-user"/></svg> <span class="nav-text">Enroll Citizen</span>
+      </button>
+      <button class="nav-item" onclick="switchTab('tab-print', this)">
+        <svg class="icon"><use href="#icon-print"/></svg> <span class="nav-text">Printable e-ID</span>
+      </button>
+      <button class="nav-item" onclick="switchTab('tab-registry', this)">
+        <svg class="icon"><use href="#icon-badge"/></svg> <span class="nav-text">Revocation Registry</span>
+      </button>
+      <button class="nav-item" onclick="switchTab('tab-ayuda', this)">
+        <svg class="icon"><use href="#icon-ayuda"/></svg> <span class="nav-text">Disaster Ayuda</span>
+      </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+      <!-- TAB 1: OVERVIEW -->
+      <section id="tab-overview" class="tab-content active">
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-label">Total Enrolled Citizens</span>
+            <span class="stat-val" id="stat-total">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Active Credentials</span>
+            <span class="stat-val" style="color: #0F5132;" id="stat-active">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Revoked Credentials</span>
+            <span class="stat-val" style="color: var(--md-error);" id="stat-revoked">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Senior Citizens (OSCA)</span>
+            <span class="stat-val" style="color: #B26B00;" id="stat-seniors">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">4Ps Indigent Families</span>
+            <span class="stat-val" style="color: #198754;" id="stat-4ps">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">PWD Beneficiaries</span>
+            <span class="stat-val" style="color: #0D6EFD;" id="stat-pwd">--</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg class="icon"><use href="#icon-badge"/></svg>
+              <span>Municipal Trust Anchor & Cryptographic Health</span>
+            </div>
+            <span class="status-badge status-active">Ed25519 Pure & PQC ML-DSA Ready</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--md-on-surface-variant); line-height: 1.6;">
+            Root Authority: <strong>Bayan ng Tanza, Lalawigan ng Cavite (PSGC: 042120000)</strong><br>
+            Signed Delta Revocation Bitmap: <strong>122.1 KB Compressed Bitmask (1,000,000 citizen capacity)</strong><br>
+            Offline Verification Engine: <strong>Sub-millisecond latency (0.107 ms avg) with zero cloud dependencies</strong>
+          </p>
+        </div>
+      </section>
+
+      <!-- TAB 2: CITIZEN ENROLLMENT -->
+      <section id="tab-enroll" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg class="icon"><use href="#icon-add-user"/></svg>
+              <span>Enroll New Citizen (LGU e-ID Issuance)</span>
+            </div>
+          </div>
+
+          <form id="enroll-form" onsubmit="handleEnroll(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Full Legal Name (Apelyido, Unang Pangalan, Gitna)</label>
+                <input type="text" id="inp-name" class="form-input" placeholder="e.g. Juan Bautista dela Cruz" required>
+              </div>
+              <div class="form-group">
+                <label>Date of Birth (Araw ng Kapanganakan)</label>
+                <input type="date" id="inp-dob" class="form-input" required>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label>Barangay (Piliin sa 41 Barangay ng Tanza)</label>
+              <select id="inp-barangay" class="form-select" required>
+                <option value="Barangay Daang Amaya II">Barangay Daang Amaya II</option>
+                <option value="Barangay Daang Amaya I">Barangay Daang Amaya I</option>
+                <option value="Barangay Amaya I">Barangay Amaya I</option>
+                <option value="Barangay Amaya II">Barangay Amaya II</option>
+                <option value="Barangay Julugan I">Barangay Julugan I</option>
+                <option value="Barangay Julugan II">Barangay Julugan II</option>
+                <option value="Barangay Biwas">Barangay Biwas</option>
+                <option value="Barangay Bucal">Barangay Bucal</option>
+                <option value="Barangay Bagtas">Barangay Bagtas</option>
+                <option value="Barangay Halayhay">Barangay Halayhay</option>
+                <option value="Barangay Paradahan I">Barangay Paradahan I</option>
+                <option value="Barangay Poblacion I">Barangay Poblacion I</option>
+                <option value="Barangay Sahud-Ulan">Barangay Sahud-Ulan</option>
+                <option value="Barangay Santol">Barangay Santol</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+              <label>Civic Entitlements & Privileges (Bitmask Flags)</label>
+              <div class="chip-group">
+                <div class="filter-chip selected" data-flag="1" onclick="toggleChip(this)">
+                  <svg class="icon"><use href="#icon-check"/></svg> Bonafide Resident (Bit 0)
+                </div>
+                <div class="filter-chip" data-flag="2" onclick="toggleChip(this)">
+                  <svg class="icon"><use href="#icon-badge"/></svg> Senior Citizen (OSCA Bit 1)
+                </div>
+                <div class="filter-chip" data-flag="4" onclick="toggleChip(this)">
+                  <svg class="icon"><use href="#icon-ayuda"/></svg> DSWD 4Ps Indigent (Bit 2)
+                </div>
+                <div class="filter-chip" data-flag="16" onclick="toggleChip(this)">
+                  <svg class="icon"><use href="#icon-person"/></svg> PWD (Bit 4)
+                </div>
+                <div class="filter-chip" data-flag="32" onclick="toggleChip(this)">
+                  <svg class="icon"><use href="#icon-person"/></svg> Solo Parent (Bit 5)
+                </div>
+                <div class="filter-chip selected" data-flag="64" onclick="toggleChip(this)">
+                  <svg class="icon"><use href="#icon-badge"/></svg> Registered Voter (Bit 6)
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="padding: 12px 28px; font-size: 0.95rem;">
+              <svg class="icon"><use href="#icon-badge"/></svg> Issue Cryptographic Credential
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- TAB 3: PRINTABLE CARD -->
+      <section id="tab-print" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg class="icon"><use href="#icon-print"/></svg>
+              <span>Physical PVC / Paper e-ID Card Generator</span>
+            </div>
+            <button class="btn btn-primary" onclick="window.print()">
+              <svg class="icon"><use href="#icon-print"/></svg> Print Official e-ID Card
+            </button>
+          </div>
+
+          <p style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin-bottom: 24px;">
+            High-contrast physical card specification designed for senior citizens and residents without smartphones.
+            Embeds 97-byte PureEd25519 static QR readable by offline inspector terminals.
+          </p>
+
+          <div id="printable-id-card-view">
+            <div class="printable-card-preview">
+              <div class="print-guilloche"></div>
+              
+              <div class="card-front-top">
+                <div>
+                  <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: #FFE088; font-weight: 800;">Republika ng Pilipinas • Lalawigan ng Cavite</div>
+                  <div style="font-size: 1.15rem; font-weight: 800; letter-spacing: -0.2px;">BAYAN NG TANZA e-ID</div>
+                </div>
+                <div style="font-size: 0.7rem; background: rgba(255,224,136,0.25); border: 1px solid #FFE088; padding: 3px 8px; border-radius: 6px; font-weight: 700; color: #FFE088;">
+                  PSGC: 042120000
+                </div>
+              </div>
+
+              <div class="card-front-body">
+                <div style="width: 80px; height: 96px; border-radius: 8px; background: #D1E7DD; border: 1px solid rgba(255,255,255,0.4); display: grid; place-items: center; color: #0F5132;">
+                  <svg style="width: 44px; height: 44px; fill: currentColor;"><use href="#icon-person"/></svg>
+                </div>
+                <div style="flex: 1;">
+                  <div style="font-size: 0.7rem; color: #89F8C7; font-weight: 700; text-transform: uppercase;">Citizen Name</div>
+                  <div style="font-size: 1.05rem; font-weight: 800;" id="print-name">Juan Bautista dela Cruz</div>
+                  <div style="font-size: 0.75rem; opacity: 0.9; margin-top: 3px;" id="print-address">Barangay Daang Amaya II, Tanza, Cavite</div>
+                  <div style="font-size: 0.7rem; opacity: 0.8; margin-top: 2px;">DOB: <span id="print-dob">1958-06-24</span> • OSCA & 4Ps Beneficiary</div>
+                </div>
+                <div class="card-qr-box">
+                  <img id="print-qr-img" src="" alt="Offline Static QR">
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; opacity: 0.85; border-top: 1px solid rgba(255,255,255,0.25); padding-top: 8px;">
+                <span>ID: <code id="print-pseudonym" style="font-family: var(--font-mono); color: #FFE088;">e04b82d7...</code></span>
+                <span>AUTHENTIC OFFLINE DIGITAL TRUST ANCHOR</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: REVOCATION REGISTRY -->
+      <section id="tab-registry" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg class="icon"><use href="#icon-block"/></svg>
+              <span>Municipal Revocation Registry & Bitmask Sync</span>
+            </div>
+            <button class="btn btn-tonal" onclick="loadCitizens()">
+              <svg class="icon"><use href="#icon-sync"/></svg> Refresh Registry
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Citizen Name</th>
+                  <th>Barangay</th>
+                  <th>Registry Index</th>
+                  <th>Status</th>
+                  <th>Entitlements</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="citizens-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: DISASTER AYUDA -->
+      <section id="tab-ayuda" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg class="icon"><use href="#icon-ayuda"/></svg>
+              <span>Lingap Tanza: Calamity Ayuda Anti-Double-Dipping Monitor</span>
+            </div>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--md-on-surface-variant); margin-bottom: 18px;">
+            Prevents duplicate relief goods and cash subsidy claims across multiple tents and checkpoints in Tanza during typhoon emergencies.
+          </p>
+
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr>
+                  <th>Receipt ID</th>
+                  <th>Event Name</th>
+                  <th>Citizen ID</th>
+                  <th>Claim Timestamp</th>
+                  <th>Ration Item</th>
+                  <th>Station ID</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="ayuda-table-body">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let isTagalog = false;
+    let enrolledCitizens = [];
+
+    const translations = {
+      en: {
+        portalTitle: "Municipal Civil Registrar & Admin Portal",
+        lguSubtitle: "Pamahalaang Bayan ng Tanza, Lalawigan ng Cavite • PSGC: 042120000",
+      },
+      tl: {
+        portalTitle: "Talaang Sibil at Pangangasiwa ng Bayan ng Tanza",
+        lguSubtitle: "Pamahalaang Bayan ng Tanza, Lalawigan ng Cavite • PSGC: 042120000",
+      }
+    };
+
+    function toggleLanguage() {
+      isTagalog = !isTagalog;
+      const dict = isTagalog ? translations.tl : translations.en;
+      document.getElementById("lbl-portal-title").innerText = dict.portalTitle;
+      document.getElementById("lbl-lgu-subtitle").innerText = dict.lguSubtitle;
+      document.getElementById("lang-flag").innerText = isTagalog ? "🇺🇸" : "🇵🇭";
+      document.getElementById("lang-text").innerText = isTagalog ? "English" : "Tagalog";
+    }
+
+    function switchTab(tabId, el) {
+      document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
+      el.classList.add("active");
+
+      if (tabId === "tab-overview") loadStats();
+      if (tabId === "tab-registry") loadCitizens();
+      if (tabId === "tab-ayuda") loadAyudaRecords();
+    }
+
+    function toggleChip(chip) {
+      chip.classList.toggle("selected");
+    }
+
+    async function loadStats() {
+      try {
+        const res = await fetch("/api/admin/stats");
+        const data = await res.json();
+        document.getElementById("stat-total").innerText = data.totalRegistered;
+        document.getElementById("stat-active").innerText = data.activeCount;
+        document.getElementById("stat-revoked").innerText = data.revokedCount;
+        document.getElementById("stat-seniors").innerText = data.seniorCount;
+        document.getElementById("stat-4ps").innerText = data.indigentCount;
+        document.getElementById("stat-pwd").innerText = data.pwdCount;
+      } catch (err) {
+        console.error("Failed to load stats", err);
+      }
+    }
+
+    async function loadCitizens() {
+      try {
+        const res = await fetch("/api/admin/citizens");
+        enrolledCitizens = await res.json();
+        const tbody = document.getElementById("citizens-table-body");
+        tbody.innerHTML = "";
+
+        enrolledCitizens.forEach(c => {
+          const tr = document.createElement("tr");
+          const statusHtml = c.isRevoked
+            ? `<span class="status-badge status-revoked">REVOKED</span>`
+            : `<span class="status-badge status-active">ACTIVE</span>`;
+
+          const btnAction = c.isRevoked
+            ? `<button class="btn btn-tonal" onclick="toggleRevoke(${c.citizenIndex})">Restore</button>`
+            : `<button class="btn btn-danger" onclick="toggleRevoke(${c.citizenIndex})">Revoke</button>`;
+
+          let entitlements = [];
+          if (c.claimsMask & 1) entitlements.push("Resident");
+          if (c.claimsMask & 2) entitlements.push("Senior");
+          if (c.claimsMask & 4) entitlements.push("4Ps");
+          if (c.claimsMask & 16) entitlements.push("PWD");
+          if (c.claimsMask & 32) entitlements.push("Solo Parent");
+          if (c.claimsMask & 64) entitlements.push("Voter");
+
+          tr.innerHTML = `
+            <td><strong>${c.fullName}</strong></td>
+            <td>${c.barangay}</td>
+            <td><code>#${c.citizenIndex}</code></td>
+            <td>${statusHtml}</td>
+            <td>${entitlements.join(", ")}</td>
+            <td>${btnAction}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // Update default printable card
+        if (enrolledCitizens.length > 0) {
+          const first = enrolledCitizens[0];
+          document.getElementById("print-name").innerText = first.fullName;
+          document.getElementById("print-address").innerText = `${first.barangay}, Tanza, Cavite`;
+          document.getElementById("print-dob").innerText = first.birthDate;
+          document.getElementById("print-pseudonym").innerText = first.pseudonym.substring(0, 16) + "...";
+          loadQrForPrint();
+        }
+      } catch (err) {
+        console.error("Failed to load citizens", err);
+      }
+    }
+
+    async function loadQrForPrint() {
+      const res = await fetch("/api/pocketbook/qr");
+      const data = await res.json();
+      document.getElementById("print-qr-img").src = data.qrDataUrl;
+    }
+
+    async function toggleRevoke(citizenIndex) {
+      try {
+        await fetch("/api/admin/revoke", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ citizenIndex }),
+        });
+        loadCitizens();
+        loadStats();
+      } catch (err) {
+        alert("Failed to toggle revocation: " + err.message);
+      }
+    }
+
+    async function handleEnroll(e) {
+      e.preventDefault();
+      const fullName = document.getElementById("inp-name").value;
+      const birthDate = document.getElementById("inp-dob").value;
+      const barangay = document.getElementById("inp-barangay").value;
+
+      let claimsMask = 0;
+      document.querySelectorAll(".chip-group .filter-chip.selected").forEach(chip => {
+        claimsMask |= parseInt(chip.getAttribute("data-flag"), 10);
+      });
+
+      try {
+        const res = await fetch("/api/admin/enroll", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName, birthDate, barangay, claimsMask }),
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert(`Successfully enrolled citizen: ${result.citizen.fullName}!`);
+          document.getElementById("enroll-form").reset();
+          loadStats();
+          loadCitizens();
+          switchTab("tab-registry", document.querySelectorAll(".nav-item")[3]);
+        }
+      } catch (err) {
+        alert("Failed to enroll citizen: " + err.message);
+      }
+    }
+
+    async function loadAyudaRecords() {
+      try {
+        const res = await fetch("/api/ayuda/records");
+        const claims = await res.json();
+        const tbody = document.getElementById("ayuda-table-body");
+        tbody.innerHTML = "";
+
+        if (claims.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--md-outline);">No relief distribution claims recorded yet.</td></tr>`;
+          return;
+        }
+
+        claims.forEach(cl => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td><code>${cl.receiptId}</code></td>
+            <td><strong>${cl.eventId}</strong></td>
+            <td><code>${cl.citizenPseudonym.substring(0, 12)}...</code></td>
+            <td>${new Date(cl.claimedAt).toLocaleTimeString()}</td>
+            <td>${cl.rationItem}</td>
+            <td>${cl.stationId}</td>
+            <td><span class="status-badge status-active">DISBURSED</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Failed to load ayuda records", err);
+      }
+    }
+
+    // Initial load
+    loadStats();
+    loadCitizens();
+  </script>
+</body>
+</html>
